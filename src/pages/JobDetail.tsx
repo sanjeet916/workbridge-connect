@@ -1,20 +1,57 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { store } from '@/lib/store';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { MapPin, Briefcase, Wrench, Laptop, ArrowLeft, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import { MapPin, Briefcase, Wrench, Laptop, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
+interface SupabaseJob {
+  id: string;
+  title: string | null;
+  category: string | null;
+  skill: string | null;
+  description: string | null;
+  location: string | null;
+  job_type: string | null;
+  salary: string | null;
+  employer_id: string | null;
+}
 
 const JobDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const job = id ? store.getJob(id) : undefined;
-  const [applied, setApplied] = useState(() => {
-    if (!user || !id) return false;
-    return store.getWorkerApplications(user.id).some(a => a.jobId === id);
-  });
+  const [job, setJob] = useState<SupabaseJob | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [applied, setApplied] = useState(false);
+
+  useEffect(() => {
+    const fetchJob = async () => {
+      if (!id) return;
+      const { data, error } = await supabase.from('jobs').select('*').eq('id', id).single();
+      if (!error && data) setJob(data as unknown as SupabaseJob);
+      setLoading(false);
+    };
+    fetchJob();
+  }, [id]);
+
+  const handleApply = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setApplied(true);
+    toast.success('Application submitted!');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (!job) {
     return (
@@ -26,16 +63,6 @@ const JobDetail = () => {
       </div>
     );
   }
-
-  const handleApply = () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    store.apply(user.id, job.id);
-    setApplied(true);
-    toast.success('Application submitted!');
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,7 +91,7 @@ const JobDetail = () => {
 
           <div className="flex flex-wrap gap-4 mb-6 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4" />{job.location}</span>
-            <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" />{job.jobType === 'on-site' ? 'On-site' : 'Remote'}</span>
+            <span className="flex items-center gap-1.5"><Briefcase className="h-4 w-4" />{job.job_type === 'on-site' ? 'On-site' : 'Remote'}</span>
             <span className="font-bold text-foreground text-base tabular-nums">{job.salary}</span>
           </div>
 
