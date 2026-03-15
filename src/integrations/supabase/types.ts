@@ -40,30 +40,39 @@ export type Database = {
       }
       jobs: {
         Row: {
+          category: string | null
           created_at: string | null
           description: string | null
           employer_id: string | null
           id: string
+          job_type: string | null
           location: string | null
           salary: string | null
+          skill: string | null
           title: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           description?: string | null
           employer_id?: string | null
           id?: string
+          job_type?: string | null
           location?: string | null
           salary?: string | null
+          skill?: string | null
           title?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           description?: string | null
           employer_id?: string | null
           id?: string
+          job_type?: string | null
           location?: string | null
           salary?: string | null
+          skill?: string | null
           title?: string | null
         }
         Relationships: []
